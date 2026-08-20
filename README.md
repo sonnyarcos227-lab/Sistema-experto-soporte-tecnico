@@ -2,7 +2,7 @@
 
 Sistema experto interactivo para el diagnóstico de fallas comunes en computadores de escritorio y portátiles, desarrollado como proyecto de la asignatura **Sistemas Expertos** en el **Instituto Tecnológico del Putumayo (ITP)**.
 
-🔗 **Demo en vivo:** [_agrega aquí la URL una vez publicada (Netlify / GitHub Pages)_](https://sonnyarcos227-lab.github.io/Sistema-experto-soporte-tecnico/)
+🔗 **Demo en vivo:** https://sonnyarcos227-lab.github.io/Sistema-experto-soporte-tecnico/
 
 ---
 
