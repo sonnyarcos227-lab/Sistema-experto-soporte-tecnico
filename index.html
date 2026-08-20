@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SE-DIAG // Sistema Experto de Diagnóstico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060b14;
+    --bg-panel:#0b1526;
+    --bg-panel-2:#0e1a30;
+    --line:#1c2c45;
+    --line-soft:#132239;
+    --cyan:#00f0ff;
+    --cyan-dim:#0a5b66;
+    --magenta:#ff2e88;
+    --amber:#ffb800;
+    --green:#39ff9d;
+    --text:#c9d9ec;
+    --text-dim2:#6e84a3;
+    --mono: 'JetBrains Mono', monospace;
+    --disp: 'Orbitron', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 15% 0%, #0d1c33 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 100%, #1a0d26 0%, transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    min-height:100vh;
+    padding:20px;
+    background-attachment:fixed;
+  }
+  /* ambient circuit grid */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+    mask-image: radial-gradient(ellipse at 50% 30%, black 0%, transparent 75%);
+  }
+  .wrap{max-width:1360px; margin:0 auto; position:relative;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    flex-wrap:wrap; gap:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px; margin-bottom:22px;
+  }
+  .brand-eyebrow{
+    font-size:11px; letter-spacing:.28em; color:var(--cyan); text-transform:uppercase;
+    display:flex; align-items:center; gap:8px; margin-bottom:6px;
+  }
+  .brand-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+  h1{
+    font-family:var(--disp); font-weight:900; font-size:clamp(22px,3.2vw,34px);
+    margin:0; color:#eef6ff; letter-spacing:.02em;
+    text-shadow:0 0 22px rgba(0,240,255,.25);
+  }
+  h1 span{color:var(--cyan);}
+  .subtitle{color:var(--text-dim2); font-size:13px; margin-top:6px; max-width:640px; line-height:1.5;}
+  .meta{text-align:right; font-size:11px; color:var(--text-dim2); line-height:1.7;}
+  .meta b{color:var(--text); font-weight:500;}
+
+  /* ---------- ARCHITECTURE STRIP ---------- */
+  .arch{
+    position:relative;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 18px 26px;
+    margin-bottom:22px;
+    overflow:hidden;
+  }
+  .arch-title{
+    font-family:var(--disp); font-size:12px; letter-spacing:.22em; color:var(--text-dim2);
+    text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:10px;
+  }
+  .arch-title::after{content:""; flex:1; height:1px; background:var(--line);}
+  .nodes{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px; position:relative; z-index:2;
+  }
+  .node{
+    border:1px solid var(--line); background:var(--bg-panel-2);
+    border-radius:8px; padding:14px 14px 12px; text-align:center;
+    transition:all .35s ease; position:relative;
+  }
+  .node .n-icon{font-size:20px; margin-bottom:8px; display:block; opacity:.85;}
+  .node .n-label{font-family:var(--disp); font-size:11px; letter-spacing:.08em; color:var(--text); font-weight:700;}
+  .node .n-sub{font-size:9.5px; color:var(--text-dim2); margin-top:4px; letter-spacing:.03em;}
+  .node.active{
+    border-color:var(--cyan);
+    box-shadow:0 0 0 1px var(--cyan) inset, 0 0 24px rgba(0,240,255,.35);
+    background:linear-gradient(180deg, rgba(0,240,255,.08), var(--bg-panel-2));
+  }
+  .node.active .n-label{color:var(--cyan); text-shadow:0 0 12px rgba(0,240,255,.6);}
+  .node.done{
+    border-color:var(--green);
+    box-shadow:0 0 0 1px var(--green) inset, 0 0 20px rgba(57,255,157,.3);
+  }
+  .node.done .n-label{color:var(--green);}
+  .trace-row{position:relative; height:14px; margin:2px 0 0;}
+  svg.traces{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
+  .pulse-line{stroke:var(--line); stroke-width:2; fill:none;}
+  .pulse-line.lit{stroke:var(--cyan); filter:drop-shadow(0 0 5px var(--cyan));}
+
+  /* ---------- MAIN GRID ---------- */
+  .grid{display:grid; grid-template-columns:1.15fr 1fr; gap:20px;}
+  @media (max-width:960px){.grid{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:20px;
+  }
+  .panel-title{
+    font-family:var(--disp); font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .idx{color:var(--text-dim2); font-size:10px;}
+
+  textarea{
+    width:100%; background:#050b16; border:1px solid var(--line); border-radius:8px;
+    color:var(--text); font-family:var(--mono); font-size:13.5px; padding:12px 14px;
+    resize:vertical; min-height:80px; outline:none; transition:border-color .2s;
+  }
+  textarea:focus{border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim);}
+  textarea::placeholder{color:var(--text-dim2);}
+
+  .row-btns{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+  button.primary{
+    background:linear-gradient(180deg, #0d3a44, #082027);
+    border:1px solid var(--cyan); color:var(--cyan); font-family:var(--disp);
+    font-weight:700; letter-spacing:.08em; font-size:12px; text-transform:uppercase;
+    padding:11px 20px; border-radius:6px; cursor:pointer; transition:all .2s;
+  }
+  button.primary:hover{background:rgba(0,240,255,.14); box-shadow:0 0 16px rgba(0,240,255,.35);}
+  button.ghost{
+    background:transparent; border:1px solid var(--line); color:var(--text-dim2);
+    font-family:var(--mono); font-size:11.5px; padding:11px 16px; border-radius:6px; cursor:pointer;
+  }
+  button.ghost:hover{border-color:var(--text-dim2); color:var(--text);}
+
+  .cat-filter{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .chip{
+    font-size:10.5px; letter-spacing:.05em; padding:6px 12px; border-radius:20px;
+    border:1px solid var(--line); color:var(--text-dim2); cursor:pointer; text-transform:uppercase;
+    transition:all .15s; user-select:none;
+  }
+  .chip:hover{border-color:var(--cyan-dim); color:var(--text);}
+  .chip.active{border-color:var(--magenta); color:var(--magenta); box-shadow:0 0 10px rgba(255,46,136,.25);}
+
+  .quick-list{max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:4px;}
+  .quick-list::-webkit-scrollbar{width:6px;}
+  .quick-list::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+  .qitem{
+    display:flex; align-items:center; gap:10px;
+    border:1px solid var(--line-soft); background:var(--bg-panel-2);
+    border-radius:6px; padding:9px 12px; cursor:pointer; font-size:12px; transition:all .15s;
+  }
+  .qitem:hover{border-color:var(--cyan-dim); background:#0e1f2e;}
+  .qitem .qid{color:var(--cyan); font-weight:700; font-size:11px; min-width:22px;}
+  .qitem .qcat{margin-left:auto; font-size:9px; color:var(--text-dim2); letter-spacing:.05em; text-transform:uppercase; border:1px solid var(--line); padding:2px 7px; border-radius:10px;}
+
+  /* ---------- RESULT ---------- */
+  .result-empty{
+    color:var(--text-dim2); font-size:12.5px; line-height:1.7; padding:18px 4px;
+    border:1px dashed var(--line); border-radius:8px; text-align:center;
+  }
+  .result{
+    border:1px solid var(--green); border-radius:8px; padding:16px 18px;
+    background:linear-gradient(180deg, rgba(57,255,157,.06), transparent);
+    animation:appear .4s ease;
+  }
+  @keyframes appear{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .result-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .rule-tag{font-family:var(--disp); font-size:11px; color:var(--green); letter-spacing:.1em;}
+  .cat-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--bg); background:var(--amber); padding:3px 9px; border-radius:4px; font-weight:700;}
+  .result h3{font-family:var(--disp); font-size:16px; color:#eef6ff; margin:0 0 12px; line-height:1.4;}
+  .kv{margin-bottom:10px;}
+  .kv .k{font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--text-dim2); margin-bottom:4px;}
+  .kv .v{font-size:13px; line-height:1.6; color:var(--text);}
+  .kv .v.mono{font-family:var(--mono); color:var(--cyan);}
+  .confidence{margin-top:14px;}
+  .conf-bar{height:6px; background:#0a1424; border-radius:4px; overflow:hidden; border:1px solid var(--line);}
+  .conf-fill{height:100%; background:linear-gradient(90deg, var(--cyan), var(--green)); box-shadow:0 0 8px rgba(57,255,157,.5); transition:width .6s ease;}
+
+  /* ---------- FACT LOG ---------- */
+  .log{max-height:230px; overflow-y:auto; display:flex; flex-direction:column-reverse; gap:8px;}
+  .log::-webkit-scrollbar{width:6px;}
+  .log::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+  .log-empty{color:var(--text-dim2); font-size:12px; padding:10px 2px;}
+  .log-item{border-left:2px solid var(--cyan-dim); padding:6px 0 6px 12px; font-size:11.5px;}
+  .log-item .lt{color:var(--text-dim2); font-size:9.5px;}
+  .log-item .lh{color:var(--text); margin:2px 0;}
+  .log-item .ld{color:var(--green); font-family:var(--mono);}
+
+  footer{
+    margin-top:8px; padding:16px 4px 4px; border-top:1px solid var(--line);
+    font-size:10.5px; color:var(--text-dim2); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+  footer b{color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand-eyebrow"><span class="dot"></span>ITP · SISTEMAS EXPERTOS</div>
+      <h1>SE<span>-</span>DIAG <span>//</span> DIAGNÓSTICO DE FALLAS</h1>
+      <div class="subtitle">Sistema experto para soporte técnico de computadores de escritorio y portátiles. Base de conocimiento de 30 reglas SI → ENTONCES sobre Hardware, Software/SO, Red, Periféricos y Otros.</div>
+    </div>
+    <div class="meta">
+      Instituto Tecnológico del Putumayo<br>
+      Consultado por: <b>Sonny Ferney Arcos Duarte</b><br>
+      Motor: <b id="engineStatus">forward-chaining · inactivo</b>
+    </div>
+  </header>
+
+  <div class="arch">
+    <div class="arch-title">Arquitectura del sistema experto</div>
+    <div class="nodes" id="nodes">
+      <div class="node" data-node="interfaz">
+        <span class="n-icon">🖥️</span>
+        <div class="n-label">Interfaz de usuario</div>
+        <div class="n-sub">entrada del síntoma</div>
+      </div>
+      <div class="node" data-node="hechos">
+        <span class="n-icon">🗂️</span>
+        <div class="n-label">Base de hechos</div>
+        <div class="n-sub">caso actual</div>
+      </div>
+      <div class="node" data-node="motor">
+        <span class="n-icon">⚙️</span>
+        <div class="n-label">Motor de inferencia</div>
+        <div class="n-sub">compara reglas</div>
+      </div>
+      <div class="node" data-node="conocimiento">
+        <span class="n-icon">📘</span>
+        <div class="n-label">Base de conocimiento</div>
+        <div class="n-sub">30 reglas SI→ENTONCES</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: input -->
+    <div>
+      <div class="panel">
+        <div class="panel-title"><span class="idx">01 /</span> Describe la falla (interfaz de usuario)</div>
+        <textarea id="symptomInput" placeholder="Ej: el computador se apaga solo cuando juego, o no enciende ninguna luz al presionar el botón..."></textarea>
+        <div class="row-btns">
+          <button class="primary" id="runBtn">▶ Ejecutar diagnóstico</button>
+          <button class="ghost" id="clearBtn">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span class="idx">02 /</span> O selecciona una falla conocida</div>
+        <div class="cat-filter" id="catFilter"></div>
+        <div class="quick-list" id="quickList"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: result + log -->
+    <div>
+      <div class="panel">
+        <div class="panel-title"><span class="idx">03 /</span> Diagnóstico (motor de inferencia)</div>
+        <div id="resultBox">
+          <div class="result-empty">Sin consulta activa. Ingresa un síntoma o elige una falla de la lista para iniciar el encadenamiento hacia adelante.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span class="idx">04 /</span> Base de hechos — historial de la sesión</div>
+        <div class="log" id="logBox">
+          <div class="log-empty">Aún no se han registrado hechos en esta sesión.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div><b>Uso educativo.</b> Este sistema experto no reemplaza a un técnico certificado. Si hay riesgo eléctrico, olor a quemado o daño físico visible, desconecta el equipo y busca soporte especializado.</div>
+    <div>Categorías: Hardware · Software/SO · Red · Periféricos · Otros</div>
+  </footer>
+
+</div>
+
+<script>
+/* ================= BASE DE CONOCIMIENTO: 30 REGLAS ================= */
+const RULES = [
+{id:1, cat:"Hardware", sintoma:"Equipo no enciende", regla:"SI no hay luces ni ventiladores al presionar el botón de encendido ENTONCES la fuente de poder está dañada o desconectada", solucion:"Verificar cable de poder, probar con otra fuente (PSU tester), revisar conexión de 24 pines a la tarjeta madre.", kw:["no enciende","sin luces","no prende","sin ventiladores","boton de encendido","no arranca nada","no hace nada"]},
+{id:2, cat:"Hardware", sintoma:"Reinicios aleatorios / pantallas azules intermitentes", regla:"SI el equipo se reinicia sin patrón fijo o presenta BSOD variados ENTONCES hay memoria RAM defectuosa", solucion:"Ejecutar Windows Memory Diagnostic o MemTest86, retirar y volver a insertar los módulos, probar uno por uno.", kw:["reinicia solo","reinicios aleatorios","pantalla azul variada","se reinicia sin razon","ram defectuosa","bsod aleatorio"]},
+{id:3, cat:"Hardware", sintoma:"Disco duro lento con ruidos de clic", regla:"SI el disco emite clics repetitivos y el sistema tarda en cargar archivos ENTONCES hay sectores dañados o falla mecánica del disco", solucion:"Respaldar información de inmediato, ejecutar chkdsk /f /r, reemplazar el disco (S.M.A.R.T. en estado crítico).", kw:["disco hace clic","ruido en el disco","clics repetitivos","disco lento con ruido","sectores dañados","hdd hace ruido"]},
+{id:4, cat:"Hardware", sintoma:"Apagados repentinos bajo carga", regla:"SI el equipo se apaga solo al jugar o exigir CPU/GPU ENTONCES existe sobrecalentamiento por disipación insuficiente", solucion:"Limpiar polvo de disipadores, cambiar pasta térmica, verificar velocidad de ventiladores, mejorar flujo de aire del gabinete.", kw:["se apaga jugando","se apaga con carga","sobrecalentamiento","se apaga al jugar","calor excesivo","se apaga solo al exigir"]},
+{id:5, cat:"Hardware", sintoma:"No hay POST (sin video, pitidos)", regla:"SI la tarjeta madre no muestra video ni sonido de arranque ENTONCES hay falla en tarjeta madre o capacitores hinchados", solucion:"Inspeccionar capacitores visualmente, probar con tarjeta de video externa, contactar soporte técnico especializado.", kw:["no hay post","sin video al encender","pitidos al iniciar","no da imagen","tarjeta madre dañada","capacitores hinchados","no post"]},
+{id:6, cat:"Hardware", sintoma:"Pierde la fecha y hora al reiniciar", regla:"SI el reloj del sistema se reinicia cada vez que se apaga el equipo ENTONCES la batería CMOS está agotada", solucion:"Reemplazar la batería CMOS (tipo CR2032) de la tarjeta madre.", kw:["pierde la fecha","pierde la hora","reloj se reinicia","bateria cmos","fecha incorrecta al reiniciar"]},
+{id:7, cat:"Hardware", sintoma:"Reinicios solo durante juegos o tareas pesadas", regla:"SI el equipo se apaga únicamente bajo alta demanda gráfica ENTONCES la fuente de poder es insuficiente para el consumo del sistema", solucion:"Calcular el consumo real (vatios) de los componentes y reemplazar por una fuente de mayor capacidad certificada.", kw:["fuente insuficiente","se apaga en juegos exigentes","fuente de poder debil","no aguanta la fuente","psu insuficiente"]},
+{id:8, cat:"Hardware", sintoma:"Ruido excesivo y sobrecalentamiento", regla:"SI se escucha un ventilador rozando o girando con dificultad ENTONCES hay acumulación de polvo o rodamiento desgastado", solucion:"Limpiar con aire comprimido, lubricar o reemplazar el ventilador afectado.", kw:["ventilador hace ruido","ventilador roza","cooler ruidoso","fan ruidoso","rodamiento desgastado","zumbido ventilador"]},
+{id:9, cat:"Hardware", sintoma:"Dispositivos USB no reconocidos", regla:"SI ningún dispositivo es detectado en un puerto específico ENTONCES el puerto USB está dañado o el driver del controlador falló", solucion:"Probar el dispositivo en otro puerto, actualizar drivers de controladoras USB, revisar en Administrador de dispositivos.", kw:["usb no detecta","puerto usb dañado","no reconoce usb","no detecta dispositivo usb","usb no funciona"]},
+{id:10, cat:"Hardware", sintoma:"Disco no aparece en la BIOS", regla:"SI el disco duro no es reconocido en la BIOS/UEFI ENTONCES el cable SATA/alimentación está flojo o dañado", solucion:"Revisar y reasegurar los cables SATA y de alimentación, probar con otro cable o puerto SATA.", kw:["disco no aparece en bios","no detecta el disco","bios no ve el disco","disco no reconocido","sata suelto"]},
+{id:11, cat:"Software / SO", sintoma:"Pantalla azul (BSOD) tras instalar un programa o driver", regla:"SI el BSOD aparece después de instalar un driver o software nuevo ENTONCES el driver es incompatible con el sistema", solucion:"Iniciar en Modo Seguro, desinstalar el driver/programa reciente, restaurar sistema a un punto anterior.", kw:["pantalla azul despues de instalar","bsod tras instalar driver","error luego de instalar programa","pantalla azul con driver nuevo"]},
+{id:12, cat:"Software / SO", sintoma:"Pantalla azul con código MEMORY_MANAGEMENT", regla:"SI el BSOD indica error de memoria (0x0000001A) ENTONCES hay incompatibilidad o falla física de RAM", solucion:"Ejecutar MemTest86, verificar compatibilidad de velocidad/voltaje en la BIOS, probar módulos individualmente.", kw:["memory management","0x0000001a","bsod memoria","error de memoria pantalla azul","codigo de error memoria"]},
+{id:13, cat:"Software / SO", sintoma:"El sistema operativo no arranca", regla:"SI aparece 'Disco de arranque no encontrado' o pantalla negra sin logo ENTONCES el MBR/GPT o el gestor de arranque está corrupto", solucion:"Usar medio de recuperación de Windows, ejecutar bootrec /fixmbr y bootrec /rebuildbcd.", kw:["disco de arranque no encontrado","no arranca windows","pantalla negra sin logo","mbr corrupto","no bootea","gestor de arranque"]},
+{id:14, cat:"Software / SO", sintoma:"Boot loop tras una actualización de Windows", regla:"SI el equipo reinicia en ciclo después de instalar una actualización ENTONCES la actualización quedó corrupta o incompleta", solucion:"Arrancar en modo seguro, desinstalar la última actualización (wusa /uninstall), usar punto de restauración.", kw:["boot loop","ciclo de reinicio","reinicia en bucle","actualizacion de windows fallo","update corrupto"]},
+{id:15, cat:"Software / SO", sintoma:"Lentitud general del sistema", regla:"SI el disco tiene menos del 10% de espacio libre ENTONCES el sistema opera con lentitud por falta de memoria virtual", solucion:"Liberar espacio, ejecutar Liberador de espacio en disco, desfragmentar (HDD) o verificar TRIM (SSD).", kw:["pc lento","computador lento","muy lento en general","disco casi lleno","poco espacio en disco","lentitud general"]},
+{id:16, cat:"Software / SO", sintoma:"Programas que dejan de responder", regla:"SI una aplicación se congela y no cierra ENTONCES el proceso quedó bloqueado en memoria", solucion:"Finalizar el proceso desde el Administrador de tareas, actualizar la aplicación, revisar compatibilidad.", kw:["programa no responde","aplicacion congelada","se queda pegado el programa","no cierra la aplicacion","proceso bloqueado"]},
+{id:17, cat:"Software / SO", sintoma:"Lentitud con ventanas emergentes no solicitadas", regla:"SI aparecen anuncios/pop-ups y el equipo va lento ENTONCES el sistema está infectado con malware o adware", solucion:"Ejecutar antivirus/antimalware actualizado en modo seguro, revisar programas de inicio, eliminar extensiones sospechosas del navegador.", kw:["pop ups","anuncios no deseados","publicidad sola","malware","adware","ventanas emergentes"]},
+{id:18, cat:"Software / SO", sintoma:"Archivos con extensión desconocida e inaccesibles", regla:"SI los archivos aparecen encriptados y con nota de rescate ENTONCES el equipo fue afectado por ransomware", solucion:"Desconectar de la red inmediatamente, no pagar el rescate, restaurar desde copia de seguridad, notificar a soporte/seguridad informática.", kw:["archivos encriptados","nota de rescate","ransomware","extension desconocida","archivos bloqueados con mensaje"]},
+{id:19, cat:"Software / SO", sintoma:"Pantalla negra o parpadeo de video", regla:"SI la imagen desaparece o parpadea tras iniciar sesión ENTONCES el driver de la tarjeta de video está desactualizado o corrupto", solucion:"Reinstalar el driver de video desde el fabricante (modo seguro si es necesario), usar Display Driver Uninstaller.", kw:["pantalla negra tras iniciar sesion","parpadeo de pantalla","driver de video corrupto","pantalla parpadea","video intermitente"]},
+{id:20, cat:"Software / SO", sintoma:"Pantalla azul recurrente en cada arranque", regla:"SI el BSOD aparece siempre antes de cargar el escritorio ENTONCES los archivos del sistema operativo están corruptos", solucion:"Ejecutar sfc /scannow y DISM /Online /Cleanup-Image /RestoreHealth desde modo de recuperación.", kw:["pantalla azul en cada arranque","bsod siempre al iniciar","archivos de sistema corruptos","bsod recurrente"]},
+{id:21, cat:"Red", sintoma:"Sin acceso a internet a pesar de estar conectado", regla:"SI el equipo muestra conexión pero sin acceso a internet ENTONCES no se asignó una IP válida por DHCP", solucion:"Ejecutar ipconfig /release y /renew, reiniciar el router, verificar configuración del servidor DHCP.", kw:["conectado pero sin internet","sin acceso a internet","dhcp","no navega aunque conectado","conexion limitada"]},
+{id:22, cat:"Red", sintoma:"Wifi no detecta ninguna red", regla:"SI el equipo no muestra redes disponibles ENTONCES el adaptador de red inalámbrica está deshabilitado o el driver falló", solucion:"Habilitar el adaptador en Configuración de red, reinstalar el driver del adaptador wifi.", kw:["wifi no detecta redes","no aparecen redes wifi","adaptador wifi deshabilitado","no ve el wifi"]},
+{id:23, cat:"Red", sintoma:"Conexión a internet muy lenta", regla:"SI la velocidad es mucho menor a la contratada ENTONCES hay saturación de ancho de banda o interferencia de señal", solucion:"Verificar número de dispositivos conectados, cambiar canal wifi, usar cable Ethernet como prueba de descarte.", kw:["internet lento","wifi lento","velocidad baja de internet","internet muy lento"]},
+{id:24, cat:"Red", sintoma:"Sin conexión Ethernet (cable)", regla:"SI el puerto de red no enciende ninguna luz ENTONCES el cable de red está dañado o mal conectado", solucion:"Probar con otro cable, verificar el puerto en el switch/router, revisar el conector RJ45.", kw:["cable de red no funciona","ethernet sin luces","sin conexion por cable","rj45 dañado","puerto de red sin luz"]},
+{id:25, cat:"Periféricos", sintoma:"Teclado no responde", regla:"SI ninguna tecla genera respuesta en pantalla ENTONCES hay un problema de driver o de conexión física", solucion:"Probar en otro puerto USB, reinstalar el driver de teclado, probar el teclado en otro equipo para descartar falla física.", kw:["teclado no responde","teclado no funciona","teclas no funcionan","teclado no escribe"]},
+{id:26, cat:"Periféricos", sintoma:"Mouse no responde o se mueve errático", regla:"SI el cursor no se mueve o salta de forma errática ENTONCES hay falla de batería (inalámbrico), driver o puerto", solucion:"Cambiar baterías/recargar, probar otro puerto USB, reinstalar drivers del mouse.", kw:["mouse no responde","mouse erratico","cursor se mueve solo","raton no funciona","mouse no se mueve"]},
+{id:27, cat:"Periféricos", sintoma:"Impresora no imprime documentos enviados", regla:"SI los trabajos quedan 'en cola' sin imprimir ENTONCES el spooler de impresión está atascado", solucion:"Reiniciar el servicio 'Cola de impresión' (Print Spooler), borrar archivos pendientes en la carpeta spool, reinstalar el driver.", kw:["impresora no imprime","trabajos en cola","spooler atascado","impresora no responde","cola de impresion"]},
+{id:28, cat:"Periféricos", sintoma:"Monitor sin señal ('No Signal')", regla:"SI el monitor muestra 'sin señal' aunque el equipo esté encendido ENTONCES el cable de video está suelto o dañado", solucion:"Revisar conexión HDMI/VGA/DisplayPort en ambos extremos, probar con otro cable, verificar que la GPU esté bien asentada.", kw:["no signal","sin señal monitor","monitor no muestra imagen","pantalla sin señal","hdmi suelto"]},
+{id:29, cat:"Periféricos", sintoma:"Sin sonido en los parlantes", regla:"SI no se escucha audio aunque el volumen esté activo ENTONCES el dispositivo de reproducción no está seleccionado o el driver falló", solucion:"Verificar dispositivo de salida predeterminado en Configuración de sonido, reinstalar driver de audio, revisar conexión física.", kw:["sin sonido","no hay audio","parlantes no suenan","sin audio en los parlantes","no escucho nada"]},
+{id:30, cat:"Otros", sintoma:"Equipo no enciende tras actualizar la BIOS", regla:"SI el equipo queda sin video ni arranque después de un flasheo de BIOS ENTONCES la actualización falló ('brick')", solucion:"Usar función de recuperación de BIOS del fabricante (BIOS Flashback / dual BIOS), o reprogramar el chip con programador externo.", kw:["no enciende tras actualizar bios","bios brickeada","fallo actualizacion de bios","flasheo de bios fallido"]},
+];
+
+const CATS = ["Todas","Hardware","Software / SO","Red","Periféricos","Otros"];
+let activeCat = "Todas";
+
+/* ================= INTERFAZ: lista de fallas ================= */
+const catFilterEl = document.getElementById("catFilter");
+const quickListEl = document.getElementById("quickList");
+
+CATS.forEach(c=>{
+  const chip = document.createElement("div");
+  chip.className = "chip" + (c===activeCat ? " active":"");
+  chip.textContent = c;
+  chip.addEventListener("click", ()=>{
+    activeCat = c;
+    [...catFilterEl.children].forEach(ch=>ch.classList.remove("active"));
+    chip.classList.add("active");
+    renderQuickList();
+  });
+  catFilterEl.appendChild(chip);
+});
+
+function renderQuickList(){
+  quickListEl.innerHTML = "";
+  const list = RULES.filter(r => activeCat==="Todas" || r.cat===activeCat);
+  list.forEach(r=>{
+    const item = document.createElement("div");
+    item.className = "qitem";
+    item.innerHTML = `<span class="qid">N°${r.id}</span><span>${r.sintoma}</span><span class="qcat">${r.cat}</span>`;
+    item.addEventListener("click", ()=>{
+      document.getElementById("symptomInput").value = r.sintoma;
+      runDiagnosis(r.sintoma, r);
+    });
+    quickListEl.appendChild(item);
+  });
+}
+renderQuickList();
+
+/* ================= MOTOR DE INFERENCIA ================= */
+function normalize(str){
+  return str.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9\s]/g," ");
+}
+
+function inferRule(userText){
+  const text = normalize(userText);
+  let best = null, bestScore = 0;
+  RULES.forEach(r=>{
+    let score = 0;
+    r.kw.forEach(k=>{
+      const nk = normalize(k);
+      if(text.includes(nk)) score += nk.split(" ").length * 2;
+    });
+    // loose word overlap fallback
+    const words = new Set(text.split(/\s+/).filter(w=>w.length>3));
+    normalize(r.sintoma).split(/\s+/).forEach(w=>{
+      if(w.length>3 && words.has(w)) score += 1;
+    });
+    if(score > bestScore){ bestScore = score; best = r; }
+  });
+  return {rule:best, score:bestScore};
+}
+
+/* ================= ANIMACIÓN DE ARQUITECTURA ================= */
+const nodeEls = {
+  interfaz: document.querySelector('[data-node="interfaz"]'),
+  hechos: document.querySelector('[data-node="hechos"]'),
+  motor: document.querySelector('[data-node="motor"]'),
+  conocimiento: document.querySelector('[data-node="conocimiento"]'),
+};
+const engineStatus = document.getElementById("engineStatus");
+
+function resetNodes(){
+  Object.values(nodeEls).forEach(n=>{n.classList.remove("active","done");});
+}
+
+async function animateChain(){
+  resetNodes();
+  engineStatus.textContent = "forward-chaining · procesando…";
+  const seq = ["interfaz","hechos","motor","conocimiento"];
+  for(const key of seq){
+    nodeEls[key].classList.add("active");
+    await sleep(360);
+    nodeEls[key].classList.remove("active");
+    nodeEls[key].classList.add("done");
+  }
+  engineStatus.textContent = "forward-chaining · conclusión generada";
+}
+function sleep(ms){return new Promise(res=>setTimeout(res,ms));}
+
+/* ================= RESULTADO Y LOG ================= */
+const resultBox = document.getElementById("resultBox");
+const logBox = document.getElementById("logBox");
+let history = [];
+
+function renderResult(rule, score, rawInput){
+  if(!rule || score===0){
+    resultBox.innerHTML = `<div class="result-empty">
+      El motor de inferencia no encontró una regla coincidente en la base de conocimiento (30/30 reglas revisadas).<br><br>
+      Intenta describir el síntoma con otras palabras, o elige una falla directamente de la lista.
+    </div>`;
+    return;
+  }
+  const confidence = Math.min(96, 46 + score*7);
+  resultBox.innerHTML = `
+    <div class="result">
+      <div class="result-head">
+        <span class="rule-tag">REGLA N°${rule.id} APLICADA</span>
+        <span class="cat-badge">${rule.cat}</span>
+      </div>
+      <h3>${rule.sintoma}</h3>
+      <div class="kv">
+        <div class="k">Regla del sistema experto</div>
+        <div class="v mono">${rule.regla}</div>
+      </div>
+      <div class="kv">
+        <div class="k">Solución recomendada</div>
+        <div class="v">${rule.solucion}</div>
+      </div>
+      <div class="confidence">
+        <div class="k" style="margin-bottom:6px;">Nivel de coincidencia</div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${confidence}%"></div></div>
+      </div>
+    </div>
+  `;
+}
+
+function pushLog(rawInput, rule){
+  const time = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  history.push({time, rawInput, rule});
+  if(history.length===1) logBox.innerHTML = "";
+  const item = document.createElement("div");
+  item.className = "log-item";
+  item.innerHTML = `
+    <div class="lt">${time} · hecho registrado</div>
+    <div class="lh">"${rawInput}"</div>
+    <div class="ld">${rule ? `→ Regla N°${rule.id}: ${rule.sintoma}` : "→ sin coincidencia en la base de conocimiento"}</div>
+  `;
+  logBox.appendChild(item);
+}
+
+async function runDiagnosis(rawInput, forcedRule){
+  if(!rawInput || !rawInput.trim()){
+    document.getElementById("symptomInput").focus();
+    return;
+  }
+  document.getElementById("runBtn").disabled = true;
+  await animateChain();
+  let rule, score;
+  if(forcedRule){ rule = forcedRule; score = 10; }
+  else { const r = inferRule(rawInput); rule = r.rule; score = r.score; }
+  renderResult(rule, score, rawInput);
+  pushLog(rawInput, score>0 ? rule : null);
+  document.getElementById("runBtn").disabled = false;
+}
+
+document.getElementById("runBtn").addEventListener("click", ()=>{
+  runDiagnosis(document.getElementById("symptomInput").value);
+});
+document.getElementById("symptomInput").addEventListener("keydown",(e)=>{
+  if(e.key==="Enter" && (e.metaKey||e.ctrlKey)){
+    runDiagnosis(document.getElementById("symptomInput").value);
+  }
+});
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  document.getElementById("symptomInput").value = "";
+  resultBox.innerHTML = `<div class="result-empty">Sin consulta activa. Ingresa un síntoma o elige una falla de la lista para iniciar el encadenamiento hacia adelante.</div>`;
+  resetNodes();
+  engineStatus.textContent = "forward-chaining · inactivo";
+});
+</script>
+</body>
+</html>
