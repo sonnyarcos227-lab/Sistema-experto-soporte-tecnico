@@ -228,32 +228,6 @@
     </div>
   </header>
 
-  <div class="arch">
-    <div class="arch-title">Arquitectura del sistema experto</div>
-    <div class="nodes" id="nodes">
-      <div class="node" data-node="interfaz">
-        <span class="n-icon">🖥️</span>
-        <div class="n-label">Interfaz de usuario</div>
-        <div class="n-sub">entrada del síntoma</div>
-      </div>
-      <div class="node" data-node="hechos">
-        <span class="n-icon">🗂️</span>
-        <div class="n-label">Base de hechos</div>
-        <div class="n-sub">caso actual</div>
-      </div>
-      <div class="node" data-node="motor">
-        <span class="n-icon">⚙️</span>
-        <div class="n-label">Motor de inferencia</div>
-        <div class="n-sub">compara reglas</div>
-      </div>
-      <div class="node" data-node="conocimiento">
-        <span class="n-icon">📘</span>
-        <div class="n-label">Base de conocimiento</div>
-        <div class="n-sub">30 reglas SI→ENTONCES</div>
-      </div>
-    </div>
-  </div>
-
   <div class="grid">
     <!-- LEFT: input -->
     <div>
@@ -291,9 +265,35 @@
     </div>
   </div>
 
+  <div class="arch">
+    <div class="arch-title">Arquitectura del sistema experto</div>
+    <div class="nodes" id="nodes">
+      <div class="node" data-node="interfaz">
+        <span class="n-icon">🖥️</span>
+        <div class="n-label">Interfaz de usuario</div>
+        <div class="n-sub">entrada del síntoma</div>
+      </div>
+      <div class="node" data-node="hechos">
+        <span class="n-icon">🗂️</span>
+        <div class="n-label">Base de hechos</div>
+        <div class="n-sub">caso actual</div>
+      </div>
+      <div class="node" data-node="motor">
+        <span class="n-icon">⚙️</span>
+        <div class="n-label">Motor de inferencia</div>
+        <div class="n-sub">compara reglas</div>
+      </div>
+      <div class="node" data-node="conocimiento">
+        <span class="n-icon">📘</span>
+        <div class="n-label">Base de conocimiento</div>
+        <div class="n-sub" id="ruleCountLabel">reglas SI→ENTONCES</div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <div><b>Uso educativo.</b> Este sistema experto no reemplaza a un técnico certificado. Si hay riesgo eléctrico, olor a quemado o daño físico visible, desconecta el equipo y busca soporte especializado.</div>
-    <div>Categorías: Hardware · Software/SO · Red · Periféricos · Otros</div>
+    <div id="footerCats">Categorías: Hardware · Software/SO · Red · Periféricos · Otros</div>
   </footer>
 
 </div>
@@ -331,9 +331,48 @@ const RULES = [
 {id:28, cat:"Periféricos", sintoma:"Monitor sin señal ('No Signal')", regla:"SI el monitor muestra 'sin señal' aunque el equipo esté encendido ENTONCES el cable de video está suelto o dañado", solucion:"Revisar conexión HDMI/VGA/DisplayPort en ambos extremos, probar con otro cable, verificar que la GPU esté bien asentada.", kw:["no signal","sin señal monitor","monitor no muestra imagen","pantalla sin señal","hdmi suelto"]},
 {id:29, cat:"Periféricos", sintoma:"Sin sonido en los parlantes", regla:"SI no se escucha audio aunque el volumen esté activo ENTONCES el dispositivo de reproducción no está seleccionado o el driver falló", solucion:"Verificar dispositivo de salida predeterminado en Configuración de sonido, reinstalar driver de audio, revisar conexión física.", kw:["sin sonido","no hay audio","parlantes no suenan","sin audio en los parlantes","no escucho nada"]},
 {id:30, cat:"Otros", sintoma:"Equipo no enciende tras actualizar la BIOS", regla:"SI el equipo queda sin video ni arranque después de un flasheo de BIOS ENTONCES la actualización falló ('brick')", solucion:"Usar función de recuperación de BIOS del fabricante (BIOS Flashback / dual BIOS), o reprogramar el chip con programador externo.", kw:["no enciende tras actualizar bios","bios brickeada","fallo actualizacion de bios","flasheo de bios fallido"]},
+
+{id:31, cat:"Portátiles", sintoma:"Laptop no carga la batería / no reconoce el cargador", regla:"SI el ícono de batería muestra 'no está cargando' aunque el cargador esté conectado ENTONCES hay falla en el adaptador, el puerto de carga o el controlador de energía", solucion:"Probar con otro cargador original, revisar el puerto de carga por pines doblados, actualizar el driver de la batería en Administrador de dispositivos.", kw:["no carga la bateria","laptop no carga","no reconoce el cargador","cargador no funciona portatil","no esta cargando"]},
+{id:32, cat:"Portátiles", sintoma:"Batería de portátil se agota muy rápido", regla:"SI la duración de la batería bajó drásticamente en poco tiempo ENTONCES la batería perdió capacidad por ciclos de carga o desgaste químico", solucion:"Revisar el estado de salud de la batería (powercfg /batteryreport en Windows), calibrar la batería, reemplazarla si la capacidad de diseño cayó por debajo del 60%.", kw:["bateria se agota rapido","poca duracion de bateria","bateria dura poco","se descarga rapido el portatil"]},
+{id:33, cat:"Portátiles", sintoma:"Laptop se apaga sola por sobrecalentamiento", regla:"SI el equipo se apaga tras minutos de uso y la base está muy caliente ENTONCES los ductos de ventilación están obstruidos por polvo", solucion:"Limpiar las rejillas de ventilación con aire comprimido, usar base refrigerante, cambiar la pasta térmica del procesador si el equipo tiene varios años de uso.", kw:["laptop se apaga sola","portatil muy caliente","se apaga por calor","sobrecalentamiento portatil","base caliente"]},
+{id:34, cat:"Portátiles", sintoma:"Puerto HDMI o USB-C de la laptop no da salida de video", regla:"SI el monitor externo no recibe señal desde el puerto de video del portátil ENTONCES el puerto está dañado o la salida de video no está habilitada", solucion:"Probar con otro cable y otro monitor, usar la combinación de teclas para proyectar (Win+P), actualizar el driver de la tarjeta gráfica.", kw:["hdmi laptop no funciona","usb-c no da video","no proyecta a monitor externo","salida de video no funciona"]},
+{id:35, cat:"Portátiles", sintoma:"Teclado de laptop repite o ignora teclas ('teclas fantasma')", regla:"SI al escribir aparecen letras repetidas o algunas teclas no responden ENTONCES hay suciedad bajo las teclas o falla del flex del teclado", solucion:"Limpiar con aire comprimido y alcohol isopropílico, actualizar el driver de teclado, usar un teclado externo mientras se revisa el flex interno.", kw:["teclas fantasma","teclado repite letras","teclas no responden portatil","teclado de laptop falla"]},
+{id:36, cat:"Portátiles", sintoma:"Bisagra de pantalla floja o pantalla se cae sola", regla:"SI la pantalla no se sostiene en el ángulo elegido ENTONCES las bisagras perdieron tensión o están fracturadas", solucion:"Ajustar los tornillos de la bisagra si es posible, llevar a servicio técnico para reemplazo de bisagras, evitar forzar la pantalla más allá de su rango de apertura.", kw:["bisagra floja","pantalla se cae sola","bisagra rota","pantalla no se sostiene"]},
+{id:37, cat:"Hardware", sintoma:"Tarjeta de video con artefactos visuales (glitches, líneas, colores raros)", regla:"SI aparecen líneas, cuadros o colores extraños en pantalla durante el uso ENTONCES la GPU tiene fallas de memoria, sobrecalentamiento o daño físico", solucion:"Actualizar/reinstalar el driver de video, verificar temperaturas con software de monitoreo, probar la tarjeta en otro equipo para descartar falla física.", kw:["artefactos en pantalla","glitches video","lineas en pantalla","colores raros pantalla","pantalla con cuadros"]},
+{id:38, cat:"Hardware", sintoma:"Tarjeta de video no es detectada por el sistema", regla:"SI el Administrador de dispositivos no muestra la GPU dedicada ENTONCES la tarjeta no está bien asentada o el driver falló al cargar", solucion:"Reasentar la tarjeta en el slot PCIe, verificar el conector de alimentación auxiliar, reinstalar el driver desde cero (DDU + instalación limpia).", kw:["gpu no detectada","tarjeta de video no aparece","no reconoce la grafica","no detecta gpu dedicada"]},
+{id:39, cat:"Hardware", sintoma:"Computador no reconoce toda la RAM instalada", regla:"SI el sistema muestra menos memoria RAM de la físicamente instalada ENTONCES hay un módulo mal asentado, incompatible o el límite lo impone la placa/SO", solucion:"Reacomodar los módulos en los slots correctos, verificar en el manual de la tarjeta madre el máximo soportado, confirmar que el sistema operativo sea de 64 bits.", kw:["no reconoce toda la ram","falta memoria ram","ram no completa","no detecta toda la memoria"]},
+{id:40, cat:"Hardware", sintoma:"Olor a quemado o humo al encender el equipo", regla:"SI se percibe olor a quemado, humo o chispas al energizar el equipo ENTONCES hay un cortocircuito o componente electrónico dañado", solucion:"Apagar y desconectar el equipo de inmediato, no volver a encenderlo, llevarlo a un técnico especializado para inspección de la fuente y la tarjeta madre.", kw:["huele a quemado","sale humo del computador","olor a quemado","chispas al encender","cortocircuito"]},
+
+{id:41, cat:"Software / SO", sintoma:"Windows Update se queda atascado 'buscando actualizaciones'", regla:"SI la búsqueda de actualizaciones no avanza por horas ENTONCES el servicio de Windows Update o su caché están corruptos", solucion:"Reiniciar los servicios de Windows Update, limpiar la carpeta SoftwareDistribution, ejecutar la herramienta de solución de problemas de Windows Update.", kw:["windows update atascado","buscando actualizaciones no avanza","actualizaciones no cargan","update congelado"]},
+{id:42, cat:"Software / SO", sintoma:"El Explorador de archivos se reinicia constantemente", regla:"SI explorer.exe se cierra y reinicia solo de forma repetida ENTONCES hay un complemento del shell dañado o un perfil corrupto", solucion:"Reiniciar el proceso desde el Administrador de tareas, deshabilitar extensiones de shell de terceros, crear un nuevo perfil de usuario si persiste.", kw:["explorador se reinicia","explorer.exe falla","el escritorio parpadea y reinicia","barra de tareas desaparece y vuelve"]},
+{id:43, cat:"Software / SO", sintoma:"Alto uso de CPU o disco sin abrir programas pesados", regla:"SI el uso de CPU o disco está al 100% en reposo ENTONCES un proceso en segundo plano (indexado, actualizaciones, telemetría) está consumiendo recursos", solucion:"Revisar el Administrador de tareas por proceso, desactivar la indexación de búsqueda temporalmente, verificar actualizaciones de Windows en curso.", kw:["cpu al 100","disco al 100","uso alto de cpu en reposo","computador lento sin abrir nada","proceso consume mucho"]},
+{id:44, cat:"Software / SO", sintoma:"Windows muestra marca de agua 'Activar Windows'", regla:"SI aparece la marca de agua de activación en pantalla ENTONCES la licencia de Windows no está activada o venció", solucion:"Verificar el estado de activación en Configuración > Activación, ingresar una clave de producto válida, contactar al proveedor de la licencia.", kw:["activar windows","licencia no activada","marca de agua activacion","windows no activado"]},
+{id:45, cat:"Software / SO", sintoma:"Un programa indica que falta un archivo DLL al abrir", regla:"SI aparece un error de tipo 'falta archivo .dll' al iniciar una aplicación ENTONCES la librería fue eliminada, corrompida o no se instaló correctamente", solucion:"Reinstalar el programa, ejecutar sfc /scannow, instalar los paquetes redistribuibles de Visual C++ o .NET Framework requeridos por la aplicación.", kw:["falta archivo dll","error dll","no se encuentra el archivo dll","dll faltante"]},
+{id:46, cat:"Software / SO", sintoma:"Perfil de usuario corrupto, no carga el escritorio", regla:"SI el sistema inicia sesión pero muestra un escritorio vacío o error de perfil temporal ENTONCES el perfil de usuario de Windows está dañado", solucion:"Crear un nuevo perfil de usuario y migrar los archivos personales, revisar el registro en la clave ProfileList, ejecutar chkdsk sobre la unidad del sistema.", kw:["perfil de usuario corrupto","escritorio vacio al iniciar sesion","perfil temporal","no carga el escritorio"]},
+{id:47, cat:"Software / SO", sintoma:"Mensaje de 'reparando disco' en cada arranque", regla:"SI Windows entra en reparación automática de forma recurrente sin completar el inicio ENTONCES hay errores en el sistema de archivos o sectores dañados en la unidad del sistema", solucion:"Ejecutar chkdsk /f desde el entorno de recuperación, revisar el estado S.M.A.R.T. del disco, restaurar desde un punto de restauración o respaldo.", kw:["reparando disco","reparacion automatica en cada inicio","preparando reparacion automatica","disco en reparacion constante"]},
+{id:48, cat:"Software / SO", sintoma:"Actualización de macOS se queda a mitad de instalación", regla:"SI la barra de progreso de una actualización de macOS no avanza por mucho tiempo ENTONCES el archivo de instalación se corrompió o hay poco espacio en disco", solucion:"Esperar al menos 30-45 minutos antes de forzar el apagado, liberar espacio en disco, reiniciar en Modo Recuperación y reinstalar macOS desde ahí.", kw:["actualizacion de macos atascada","mac no termina de actualizar","instalacion macos congelada"]},
+{id:49, cat:"Software / SO", sintoma:"Kernel panic en Mac (pantalla gris con mensaje de reinicio)", regla:"SI aparece una pantalla gris indicando que se debe reiniciar el equipo ENTONCES ocurrió un fallo crítico del sistema (kernel panic) por software o hardware incompatible", solucion:"Reiniciar en Modo Seguro, revisar extensiones o periféricos de terceros recién instalados, ejecutar Apple Diagnostics para descartar falla de hardware.", kw:["kernel panic","pantalla gris de reinicio mac","mac pide reiniciar","fallo critico mac"]},
+{id:50, cat:"Software / SO", sintoma:"Linux no reconoce el adaptador de red tras la instalación", regla:"SI no aparece conexión de red disponible después de instalar una distribución Linux ENTONCES falta el driver propietario del adaptador de red", solucion:"Conectar temporalmente por cable o usar un adaptador USB compatible, instalar los drivers propietarios (ej. desde 'Additional Drivers'), verificar el chipset con lspci.", kw:["linux no detecta red","sin wifi en linux","adaptador de red no reconocido linux","ubuntu sin internet"]},
+
+{id:51, cat:"Red", sintoma:"El router se reinicia solo de forma constante", regla:"SI el router pierde conexión y se reinicia repetidamente ENTONCES hay sobrecalentamiento, firmware desactualizado o fuente de poder defectuosa", solucion:"Actualizar el firmware del router, ubicarlo en un lugar ventilado, probar con otra fuente de alimentación, restablecer a valores de fábrica si persiste.", kw:["router se reinicia solo","modem se reinicia","router se apaga y prende","router inestable"]},
+{id:52, cat:"Red", sintoma:"Conflicto de IP duplicada en la red", regla:"SI Windows muestra 'Se detectó un conflicto de dirección IP' ENTONCES dos dispositivos están usando la misma IP en la red", solucion:"Ejecutar ipconfig /release y /renew, configurar el router para asignar IPs fijas fuera del rango DHCP, reiniciar el router para limpiar la tabla de asignaciones.", kw:["conflicto de ip","ip duplicada","direccion ip en conflicto","misma ip dos dispositivos"]},
+{id:53, cat:"Red", sintoma:"La VPN no conecta o se desconecta constantemente", regla:"SI el cliente VPN falla al establecer o mantener la conexión ENTONCES hay bloqueo de firewall, credenciales vencidas o el protocolo VPN está mal configurado", solucion:"Verificar usuario y contraseña de la VPN, revisar reglas de firewall/antivirus que puedan bloquearla, probar otro protocolo (OpenVPN, IKEv2) o servidor.", kw:["vpn no conecta","vpn se desconecta","falla la vpn","no puedo conectar la vpn"]},
+{id:54, cat:"Red", sintoma:"Una aplicación específica no tiene acceso a internet aunque el resto sí", regla:"SI solo un programa no logra conectarse a internet ENTONCES el firewall o antivirus está bloqueando esa aplicación en particular", solucion:"Revisar las reglas de entrada/salida del Firewall de Windows para esa app, agregar una excepción, verificar la configuración de proxy dentro del programa.", kw:["app no tiene internet","programa sin acceso a internet","firewall bloquea programa","solo un programa sin internet"]},
+
+{id:55, cat:"Periféricos", sintoma:"La cámara web no es reconocida en videollamadas", regla:"SI la aplicación de videollamada no detecta la cámara ENTONCES el driver falló, otra app la está usando o los permisos de privacidad la bloquean", solucion:"Cerrar otras apps que puedan estar usando la cámara, revisar permisos de cámara en Configuración de privacidad, reinstalar el driver de la webcam.", kw:["camara no funciona","webcam no detectada","camara no aparece en videollamada","no reconoce la camara"]},
+{id:56, cat:"Periféricos", sintoma:"El micrófono no capta audio", regla:"SI la otra persona no escucha nada durante una llamada ENTONCES el micrófono está silenciado, mal seleccionado como dispositivo o el driver falló", solucion:"Verificar que no esté en mute (físico o de software), seleccionar el micrófono correcto en Configuración de sonido, revisar permisos de la app y del sistema.", kw:["microfono no funciona","no capta audio el microfono","no me escuchan en la llamada","microfono no detectado"]},
+{id:57, cat:"Periféricos", sintoma:"La pantalla táctil no responde", regla:"SI los toques en la pantalla no generan ninguna acción ENTONCES el driver del panel táctil falló o hay un problema de calibración", solucion:"Reiniciar el equipo, actualizar el driver del panel táctil (HID-compliant touch screen), calibrar la pantalla desde el Panel de control.", kw:["pantalla tactil no responde","touch no funciona","pantalla no reconoce toques","tactil no funciona"]},
+{id:58, cat:"Periféricos", sintoma:"El escáner no es detectado por el software", regla:"SI el software de escaneo no encuentra el dispositivo conectado ENTONCES el driver o el servicio de adquisición de imágenes de Windows (WIA) falló", solucion:"Verificar la conexión USB/red del escáner, reiniciar el servicio 'Windows Image Acquisition (WIA)', reinstalar el driver del fabricante.", kw:["escaner no detectado","no reconoce el escaner","escaner no aparece","software de escaneo no encuentra dispositivo"]},
+{id:59, cat:"Periféricos", sintoma:"Audífonos o mouse Bluetooth no emparejan", regla:"SI el dispositivo Bluetooth no aparece o no logra vincularse ENTONCES el adaptador Bluetooth está deshabilitado, el driver falló o el dispositivo ya está emparejado con otro equipo", solucion:"Activar Bluetooth en Configuración, olvidar el dispositivo y volver a emparejarlo, actualizar el driver del adaptador Bluetooth, verificar que no esté conectado a otro equipo.", kw:["bluetooth no empareja","audifonos no conectan","mouse bluetooth no conecta","no encuentra el dispositivo bluetooth"]},
+
+{id:60, cat:"Seguridad", sintoma:"El antivirus bloquea la instalación de un programa legítimo", regla:"SI el antivirus elimina o bloquea un instalador confiable ENTONCES se trata de un falso positivo en la detección heurística", solucion:"Verificar el archivo en un servicio de análisis multiantivirus, restaurarlo desde cuarentena si se confirma que es seguro, agregar una excepción puntual en el antivirus.", kw:["antivirus bloquea programa","falso positivo antivirus","antivirus elimina instalador","antivirus no deja instalar"]},
+{id:61, cat:"Seguridad", sintoma:"El equipo pide una contraseña de administrador desconocida", regla:"SI aparece una solicitud de contraseña de administrador que el usuario no configuró ENTONCES otra cuenta administradora fue creada sin autorización o hay malware con persistencia", solucion:"Iniciar en Modo Seguro con otra cuenta administradora conocida, revisar la lista de usuarios (netplan user / lusrmgr.msc), escanear con antimalware y cambiar todas las contraseñas.", kw:["contraseña de administrador desconocida","alguien creo una cuenta","pide clave que no puse","cuenta administrador sospechosa"]},
+{id:62, cat:"Seguridad", sintoma:"Contraseña de BIOS/UEFI olvidada", regla:"SI el equipo no permite entrar a la configuración de BIOS/UEFI por una contraseña olvidada ENTONCES es necesario restablecer la NVRAM/CMOS del equipo", solucion:"Retirar la batería CMOS unos minutos (equipos de escritorio) o usar el jumper de reset de la placa, o contactar al fabricante en equipos portátiles con BIOS bloqueada por seguridad.", kw:["contraseña de bios olvidada","clave de bios olvidada","no recuerdo la clave del bios","bios bloqueada"]},
+{id:63, cat:"Seguridad", sintoma:"Páginas web no cargan y muestran error de certificado", regla:"SI el navegador indica que el certificado de seguridad no es válido en múltiples sitios ENTONCES la fecha y hora del sistema están desconfiguradas", solucion:"Corregir la fecha, hora y zona horaria del sistema, verificar que la sincronización automática esté activada, reiniciar el navegador.", kw:["error de certificado","fecha incorrecta bloquea paginas","certificado de seguridad no valido","paginas no cargan por certificado"]},
+{id:64, cat:"Otros", sintoma:"Disco duro externo no es reconocido por el sistema", regla:"SI el disco externo no aparece en 'Este equipo' ni en la Administración de discos ENTONCES el cable, el puerto o el sistema de archivos del disco fallaron", solucion:"Probar con otro cable y puerto USB, verificar en Administración de discos si aparece sin letra asignada, usar software de recuperación si el sistema de archivos está corrupto antes de formatear.", kw:["disco externo no reconocido","no detecta disco duro externo","disco usb no aparece","disco externo no aparece"]},
 ];
 
-const CATS = ["Todas","Hardware","Software / SO","Red","Periféricos","Otros"];
+const CATS = ["Todas","Hardware","Software / SO","Red","Periféricos","Portátiles","Seguridad","Otros"];
 let activeCat = "Todas";
 
 /* ================= INTERFAZ: lista de fallas ================= */
@@ -368,6 +407,9 @@ function renderQuickList(){
   });
 }
 renderQuickList();
+
+document.getElementById("ruleCountLabel").textContent = RULES.length + " reglas SI→ENTONCES";
+document.getElementById("footerCats").textContent = "Categorías: " + CATS.slice(1).join(" · ");
 
 /* ================= MOTOR DE INFERENCIA ================= */
 function normalize(str){
@@ -430,7 +472,7 @@ let history = [];
 function renderResult(rule, score, rawInput){
   if(!rule || score===0){
     resultBox.innerHTML = `<div class="result-empty">
-      El motor de inferencia no encontró una regla coincidente en la base de conocimiento (30/30 reglas revisadas).<br><br>
+      El motor de inferencia no encontró una regla coincidente en la base de conocimiento (${RULES.length}/${RULES.length} reglas revisadas).<br><br>
       Intenta describir el síntoma con otras palabras, o elige una falla directamente de la lista.
     </div>`;
     return;
