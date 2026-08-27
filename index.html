@@ -219,7 +219,7 @@
     <div>
       <div class="brand-eyebrow"><span class="dot"></span>ITP · SISTEMAS EXPERTOS</div>
       <h1>SE<span>-</span>DIAG <span>//</span> DIAGNÓSTICO DE FALLAS</h1>
-      <div class="subtitle">Sistema experto para soporte técnico de computadores de escritorio y portátiles. Base de conocimiento de 30 reglas SI → ENTONCES sobre Hardware, Software/SO, Red, Periféricos y Otros.</div>
+      <div class="subtitle">Sistema experto para soporte técnico de computadores de escritorio y portátiles. Base de conocimiento de <span id="subtitleRuleCount">30 reglas</span> SI → ENTONCES sobre Hardware, Software/SO, Red, Periféricos, Portátiles, Seguridad y Otros.</div>
     </div>
     <div class="meta">
       Instituto Tecnológico del Putumayo<br>
@@ -409,6 +409,7 @@ function renderQuickList(){
 renderQuickList();
 
 document.getElementById("ruleCountLabel").textContent = RULES.length + " reglas SI→ENTONCES";
+document.getElementById("subtitleRuleCount").textContent = RULES.length + " reglas";
 document.getElementById("footerCats").textContent = "Categorías: " + CATS.slice(1).join(" · ");
 
 /* ================= MOTOR DE INFERENCIA ================= */
